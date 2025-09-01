@@ -1,0 +1,56 @@
+name: PR - Build
+
+on:
+  push:
+    branches: [ main ]   
+  pull_request: {}
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    name: Build Next.js
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pr-build-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      
+
+      - name: Restore Next.js cache
+        uses: actions/cache@v4
+        with:
+      
+          path: |
+            **/.next/cache
+          key: next-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts','**/*.tsx') }}
+          restore-keys: |
+            next-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Typecheck (opcional)
+        run: npm run typecheck --if-present
+
+      - name: Build (save logs)
+        env:
+          CI: true
+          NEXT_PUBLIC_APP_ENV: ci
+          NEXT_TELEMETRY_DISABLED: 1
+        run: |
+          npm run build 2>&1 | tee build.log
+
+      # Feedback claro cuando falla el build
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log

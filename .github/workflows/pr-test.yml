@@ -1,0 +1,55 @@
+name: PR - Tests
+
+on:
+  pull_request: {}
+  workflow_dispatch:
+
+# 🔽 Descomenta si tu proyecto NO está en la raíz (ajustá la ruta)
+# defaults:
+#   run:
+#     working-directory: "tarea 10/mi-libreria"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: write          # para publicar el reporte en la PR
+      pull-requests: write   # para comentar resumen de tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          # Si usás subcarpeta, apuntá el lockfile:
+          # cache-dependency-path: "tarea 10/mi-libreria/package-lock.json"
+
+      - name: Install deps
+        run: npm ci
+
+      # Ejecuta los tests en modo "run" (no watch) y genera JUnit
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          mkdir -p reports
+          npx vitest --if-present -- --run --reporter=default --reporter=junit --outputFile=reports/junit.xml 2>&1 | tee tests.log
+
+      # Publica un resumen visible en la PR (usar reporter JUnit)
+      - name: Publish unit test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "reports/**/*.xml"
+
+      # Guarda el log crudo si fallaron los tests (útil para debug)
+      - name: Upload test log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: tests.log
