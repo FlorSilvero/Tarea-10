@@ -17,6 +17,8 @@ const nextConfig = {
 
   // Si querés: para compilar aunque haya errores de ESLint
    eslint: { ignoreDuringBuilds: true },
+
+  output: 'standalone',
 };
 
 module.exports = nextConfig;
