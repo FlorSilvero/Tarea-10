@@ -4,10 +4,7 @@ on:
   pull_request: {}
   workflow_dispatch:
 
-# 🔽 Descomenta si tu proyecto NO está en la raíz (ajustá la ruta)
-# defaults:
-#   run:
-#     working-directory: "tarea 10/mi-libreria"
+
 
 jobs:
   test:
@@ -26,18 +23,17 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          # Si usás subcarpeta, apuntá el lockfile:
-          # cache-dependency-path: "tarea 10/mi-libreria/package-lock.json"
+       
 
       - name: Install deps
         run: npm ci
 
-      # Ejecuta los tests en modo "run" (no watch) y genera JUnit
+      # Ejecuta los tests en modo "run"  y genera JUnit
       - name: Run unit tests
         run: |
           set -o pipefail
           mkdir -p reports
-          npx vitest --if-present -- --run --reporter=default --reporter=junit --outputFile=reports/junit.xml 2>&1 | tee tests.log
+            npx vitest --run --reporter=default --reporter=junit --outputFile=reports/junit.xml 2>&1 | tee tests.log
 
       # Publica un resumen visible en la PR (usar reporter JUnit)
       - name: Publish unit test results
@@ -46,7 +42,7 @@ jobs:
         with:
           files: "reports/**/*.xml"
 
-      # Guarda el log crudo si fallaron los tests (útil para debug)
+      # Guarda el log crudo si fallaron los tests 
       - name: Upload test log on failure
         if: failure()
         uses: actions/upload-artifact@v4
