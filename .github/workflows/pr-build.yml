@@ -1,10 +1,15 @@
+
+# Workflow para buildear la app Next.js en cada Pull Request y push a main
 name: PR - Build
 
+
+# Se ejecuta en cada push a main, en cada Pull Request y manualmente (workflow_dispatch)
 on:
   push:
     branches: [ main ]   
   pull_request: {}
   workflow_dispatch:
+
 
 
 jobs:
@@ -15,27 +20,30 @@ jobs:
       group: pr-build-${{ github.ref }}
       cancel-in-progress: true
     steps:
+      # 1. Descarga el código fuente del repositorio
       - uses: actions/checkout@v4
 
+      # 2. Prepara Node.js y cachea dependencias npm
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      
 
+      # 3. Restaura el cache de Next.js para builds más rápidos
       - name: Restore Next.js cache
         uses: actions/cache@v4
         with:
-      
           path: |
             **/.next/cache
           key: next-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts','**/*.tsx') }}
           restore-keys: |
             next-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
 
+      # 4. Instala las dependencias del proyecto
       - name: Install deps
         run: npm ci
 
+      # 5. (Opcional) Verifica tipos con TypeScript
       - name: Typecheck (opcional)
         run: npm run typecheck --if-present
 

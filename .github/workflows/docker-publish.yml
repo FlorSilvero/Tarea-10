@@ -1,5 +1,9 @@
+
+# Workflow para construir y publicar la imagen Docker en GitHub Container Registry (GHCR)
 name: Publish Docker image
 
+
+# Se ejecuta cuando hay un push a la rama main o cuando se crea un tag de versión
 on:
   push:
     branches:
@@ -7,10 +11,13 @@ on:
     tags:
       - 'v*.*.*'   # si pusheás tags semánticos, también publicará con esa versión
 
+
+# Permisos necesarios para publicar imágenes en GHCR
 permissions:
   contents: read
   packages: write    # necesario para publicar en GHCR
   id-token: write    # por si en el futuro firmás imágenes
+
 
 jobs:
   docker:
@@ -18,15 +25,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Descarga el código fuente del repositorio
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 2. Prepara QEMU para builds multiplataforma (opcional)
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
 
+      # 3. Prepara Docker Buildx para builds avanzados y cache
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # 4. Inicia sesión en GitHub Container Registry usando el token de GitHub
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -34,6 +45,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 5. Extrae metadatos para etiquetar la imagen (latest, versión, commit)
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -44,12 +56,13 @@ jobs:
             type=sha,format=long
             type=ref,event=tag
 
+      # 6. Construye la imagen Docker y la publica en GHCR con los tags y labels generados
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          # Si querés multiplataforma: platforms: linux/amd64,linux/arm64
+        
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

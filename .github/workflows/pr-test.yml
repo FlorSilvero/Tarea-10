@@ -1,8 +1,13 @@
+
+# Workflow para ejecutar tests unitarios en cada Pull Request
 name: PR - Tests
 
+
+# Se ejecuta en cada Pull Request y manualmente (workflow_dispatch)
 on:
   pull_request: {}
   workflow_dispatch:
+
 
 
 
@@ -16,26 +21,28 @@ jobs:
       pull-requests: write   # para comentar resumen de tests
 
     steps:
+      # 1. Descarga el código fuente del repositorio
       - uses: actions/checkout@v4
 
+      # 2. Prepara Node.js y cachea dependencias npm
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-       
 
+      # 3. Instala las dependencias del proyecto
       - name: Install deps
         run: npm ci
 
-      # Ejecuta los tests en modo "run"  y genera JUnit
+      # 4. Ejecuta los tests unitarios con Vitest y genera reporte JUnit
       - name: Run unit tests
         run: |
           set -o pipefail
           mkdir -p reports
-            npx vitest --run --reporter=default --reporter=junit --outputFile=reports/junit.xml 2>&1 | tee tests.log
+          npx vitest --run --reporter=default --reporter=junit --outputFile=reports/junit.xml 2>&1 | tee tests.log
 
-      # Publica un resumen visible en la PR (usar reporter JUnit)
+      # 5. Publica un resumen de los resultados de los tests en la PR
       - name: Publish unit test results
         if: always()
         uses: EnricoMi/publish-unit-test-result-action@v2
