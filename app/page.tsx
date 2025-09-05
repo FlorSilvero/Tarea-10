@@ -1,9 +1,10 @@
-'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+
+
+'use client';
+import { useEffect, useState } from 'react';
 import SearchBar from '@/components/SearchBar';
 
-// Frases rotativas inspiradoras
 const phrases = [
   '“Un libro es un sueño que sostienes en tus manos.”',
   '“Leemos para saber que no estamos solos.”',
@@ -11,13 +12,52 @@ const phrases = [
   '“Los libros nos encuentran cuando estamos listos para ellos.”',
 ];
 
+function getCurrentUser() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('auth:user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function HomePage() {
-  // Rotador simple de frases
+  const [user, setUser] = useState<any>(undefined); // undefined = cargando, null = no autenticado
   const [idx, setIdx] = useState(0);
+
   useEffect(() => {
+    // Espera a que el efecto corra en el cliente
+    setUser(getCurrentUser());
+    const onChange = () => setUser(getCurrentUser());
+    window.addEventListener('auth-changed', onChange);
+    return () => window.removeEventListener('auth-changed', onChange);
+  }, []);
+
+  useEffect(() => {
+    if (user === undefined) return; // Espera a que se detecte el usuario
+    if (!user) {
+      window.location.href = '/auth';
+    }
     const id = setInterval(() => setIdx((i) => (i + 1) % phrases.length), 4500);
     return () => clearInterval(id);
-  }, []);
+  }, [user]);
+
+  if (user === undefined) {
+    // Estado de carga inicial
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <span className="text-gray-400 text-lg animate-pulse">Cargando...</span>
+      </div>
+    );
+  }
+  if (!user) return null;
+
+  function handleLogout() {
+    localStorage.removeItem('auth:user');
+    window.dispatchEvent(new Event('auth-changed'));
+    window.location.href = '/auth';
+  }
 
   return (
     <section className="relative mx-auto max-w-6xl px-4 py-16">
@@ -39,9 +79,7 @@ export default function HomePage() {
         <div className="w-full flex flex-col items-center">
           <div className="max-w-2xl w-full">
             {/* ⬇️ Importante: Suspense alrededor de SearchBar */}
-            <Suspense fallback={null}>
-              <SearchBar placeholder="Ej: harry potter, inauthor:rowling, isbn:9780439708180" />
-            </Suspense>
+            <SearchBar placeholder="Ej: harry potter, inauthor:rowling, isbn:9780439708180" />
           </div>
         </div>
 
@@ -53,6 +91,14 @@ export default function HomePage() {
         <div className="mt-2 h-6 text-center text-sm text-gray-700 transition-opacity duration-500 ease-out">
           {phrases[idx]}
         </div>
+
+        {/* Botón de salir de sesión */}
+        <button
+          onClick={handleLogout}
+          className="mt-6 rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 shadow"
+        >
+          Cerrar sesión
+        </button>
       </div>
     </section>
   );

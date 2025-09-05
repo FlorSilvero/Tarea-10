@@ -1,7 +1,12 @@
 // app/layout.tsx
+
 import './globals.css';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { connectToDB } from '../lib/db';
+
+// Intentar conectar a la base de datos apenas se monta el layout
+connectToDB();
 
 export const metadata: Metadata = {
   title: 'Mundos en palabras',

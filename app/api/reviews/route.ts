@@ -1,40 +1,66 @@
-import { NextResponse } from 'next/server';
-import { reviewSchema, Review } from '@/lib/review.locals';
-
-// In-memory store (solo demo, reemplazar con DB en prod)
-const reviewsStore: Record<string, Review[]> = {};
-
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const volumeId = searchParams.get('volumeId');
-  if (!volumeId) {
-    return NextResponse.json({ error: 'Missing volumeId' }, { status: 400 });
-  }
-  return NextResponse.json(reviewsStore[volumeId] || []);
-}
-
-export async function POST(request: Request) {
-  const { volumeId, rating, content } = await request.json();
-  if (!volumeId || !rating || !content) {
-    return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
-  }
-
+export async function GET(req: Request) {
   try {
-    const review = reviewSchema.parse({
-      id: String(Date.now() + Math.random()),
+    await connectToDB();
+    const { searchParams } = new URL(req.url);
+    const volumeId = searchParams.get('volumeId');
+    if (!volumeId) {
+      return NextResponse.json([], { status: 200 });
+    }
+    const reviews = await Review.find({ volumeId }).sort({ createdAt: -1 });
+    // Opcional: mapear para mostrar solo los campos necesarios
+    const result = reviews.map(r => ({
+      _id: r._id,
+      volumeId: r.volumeId,
+      userId: r.userId,
+      userName: r.userName,
+      rating: r.rating,
+      text: r.content,
+      createdAt: r.createdAt,
+    }));
+    return NextResponse.json(result, { status: 200 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message ?? 'Error' }, { status: 500 });
+  }
+}
+// src/app/api/reviews/route.ts  (POST)
+import { NextResponse } from "next/server";
+import { connectToDB } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
+import Review from "@/models/Review";
+import { Types } from "mongoose";
+
+export const runtime = "nodejs";
+
+export async function POST(req: Request) {
+  try {
+    const me = await requireUser(); // requiere estar logueado
+    await connectToDB();
+
+    const { volumeId, rating, content } = await req.json();
+    if (!volumeId || typeof rating !== "number" || !content) {
+      return NextResponse.json({ error: "Campos inválidos" }, { status: 400 });
+    }
+
+    if (!Types.ObjectId.isValid(me.id)) {
+      return NextResponse.json({ error: "Usuario inválido" }, { status: 400 });
+    }
+    const userId = new Types.ObjectId(me.id);
+
+    const doc = await Review.create({
+      userId,
+      volumeId,
       rating,
-      content,
-      createdAt: new Date().toISOString(),
+      content: String(content).trim(),
       up: 0,
       down: 0,
     });
 
-    if (!reviewsStore[volumeId]) reviewsStore[volumeId] = [];
-    reviewsStore[volumeId].unshift(review);
-
-    return NextResponse.json(review);
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Invalid review';
-    return NextResponse.json({ error: msg }, { status: 400 });
+    return NextResponse.json({ ok: true, review: doc }, { status: 201 });
+  } catch (e: any) {
+    if (e?.code === 11000) {
+      return NextResponse.json({ error: "Ya publicaste una reseña para este libro" }, { status: 409 });
+    }
+    const status = e?.status ?? 500;
+    return NextResponse.json({ error: e?.message ?? "Error" }, { status });
   }
 }

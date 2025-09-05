@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { z } from 'zod';
-import { createReview } from '../lib/review.locals';
+
 
 const FormSchema = z.object({
   rating: z.coerce.number().min(1).max(5),
@@ -42,24 +42,31 @@ export default function ReviewForm({ volumeId }: { volumeId: string }) {
     // Solo limpiar el form si no hay error de límite de palabras
     let reviewCreated = false;
     try {
-      await createReview(volumeId, parsed.data);
-      reviewCreated = true;
-    } catch (err) {
-      if (err instanceof Error && err.message.includes('superaste el límite')) {
+      // Aquí se envía la reseña al backend (MongoDB)
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          volumeId,
+          rating: parsed.data.rating,
+          content: parsed.data.content,
+          userId: 'demo-user', // Reemplaza por el ID real del usuario autenticado
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
         setOk(false);
-        setError(err.message);
-        // No limpiar el form
+        setError(data.error || 'Error al guardar la reseña');
         return;
-      } else {
-        throw err;
       }
-    }
-    if (reviewCreated) {
       formEl.reset();
       setOk(true);
       window.dispatchEvent(
         new CustomEvent('reviews-changed', { detail: { volumeId } })
       );
+    } catch (err) {
+      setOk(false);
+      setError('Ocurrió un error al publicar. Intentá de nuevo.');
     }
   } catch (err) {
     setOk(false);
