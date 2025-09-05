@@ -4,6 +4,8 @@ import { Schema, model, models } from "mongoose";
 const ReviewSchema = new Schema(
   {
   userId: { type: String, required: true, index: true },
+  userName: { type: String },
+  userEmail: { type: String },
     volumeId: { type: String, required: true, index: true },
     rating: { type: Number, min: 1, max: 5, required: true },
     content: { type: String, required: true },

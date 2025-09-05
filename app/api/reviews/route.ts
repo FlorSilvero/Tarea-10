@@ -13,6 +13,7 @@ export async function GET(req: Request) {
       volumeId: r.volumeId,
       userId: r.userId,
       userName: r.userName,
+      userEmail: r.userEmail,
       rating: r.rating,
       text: r.content,
       createdAt: r.createdAt,
@@ -51,6 +52,8 @@ export async function POST(req: Request) {
       volumeId,
       rating,
       content: String(content).trim(),
+      userName: me.name || '',
+      userEmail: me.email || '',
       up: 0,
       down: 0,
     });

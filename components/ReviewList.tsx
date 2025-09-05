@@ -9,6 +9,7 @@ export type Review = {
   volumeId: string;
   userId: string;
   userName?: string;
+  userEmail?: string;
   rating: number;
   text: string;
   createdAt?: string;
@@ -52,8 +53,11 @@ export default function ReviewList({ volumeId }: { volumeId: string }) {
     <ul className="space-y-3">
       {rows.map((r) => (
         <li key={r._id} className="rounded-xl border p-3">
-          <div className="text-xs text-gray-500">
-            {r.createdAt ? new Date(r.createdAt).toLocaleString() : ''}
+          <div className="text-xs text-gray-500 flex gap-2 items-center">
+            <span>{r.createdAt ? new Date(r.createdAt).toLocaleString() : ''}</span>
+            {r.userEmail && (
+              <span className="text-gray-500">· {r.userEmail}</span>
+            )}
           </div>
           <div className="font-medium">Puntaje: {r.rating}★</div>
           <p>{r.text}</p>
