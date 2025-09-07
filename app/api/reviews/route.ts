@@ -59,6 +59,8 @@ export async function GET(req: Request) {
       rating: r.rating,
       text: r.content,
       createdAt: r.createdAt,
+      up: r.up ?? 0,
+      down: r.down ?? 0
     }));
     return NextResponse.json(result, { status: 200 });
   } catch (e: any) {
@@ -91,21 +93,28 @@ export async function POST(req: Request) {
 
     const doc = await Review.create({
       userId,
+      userEmail: me.email ?? '',
+      userName: me.name ?? '',
       volumeId,
       rating,
       content: String(content).trim(),
-      userName: me.name || '',
-      userEmail: me.email || '',
-      up: 0,
-      down: 0,
     });
-
-    return NextResponse.json({ ok: true, review: doc }, { status: 201 });
+    // Devuelve todas las reseñas actualizadas
+    const reviews = await Review.find({ volumeId });
+    const reviewsWithVotes = reviews.map(r => ({
+      _id: r._id,
+      volumeId: r.volumeId,
+      userId: r.userId,
+      userName: r.userName,
+      userEmail: r.userEmail,
+      rating: r.rating,
+      text: r.content,
+      createdAt: r.createdAt,
+      up: r.up ?? 0,
+      down: r.down ?? 0
+    }));
+    return NextResponse.json(reviewsWithVotes, { status: 201 });
   } catch (e: any) {
-    if (e?.code === 11000) {
-      return NextResponse.json({ error: "Ya publicaste una reseña para este libro" }, { status: 409 });
-    }
-    const status = e?.status ?? 500;
-    return NextResponse.json({ error: e?.message ?? "Error" }, { status });
+    return NextResponse.json({ error: e?.message ?? 'Error' }, { status: 500 });
   }
 }

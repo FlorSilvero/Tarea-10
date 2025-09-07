@@ -13,6 +13,8 @@ export type Review = {
   rating: number;
   text: string;
   createdAt?: string;
+  up?: number;
+  down?: number;
 };
 
 export default function ReviewList({ volumeId }: { volumeId: string }) {
@@ -81,6 +83,36 @@ export default function ReviewList({ volumeId }: { volumeId: string }) {
           </div>
           <div className="font-medium">Puntaje: {r.rating}★</div>
           <p>{r.text}</p>
+
+          {/* Votos: solo para usuarios autenticados */}
+          {currentUser && (
+            <div className="flex gap-2 items-center mt-2">
+              <button
+                className="px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold hover:bg-green-200"
+                title="Votar positivo"
+                onClick={async () => {
+                  await fetch('/api/reviews/vote', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ volumeId, reviewId: r._id, delta: 1 }),
+                  });
+                  await fetchReviews();
+                }}
+              >👍 {r.up || 0}</button>
+              <button
+                className="px-2 py-1 rounded bg-red-100 text-red-800 text-xs font-semibold hover:bg-red-200"
+                title="Votar negativo"
+                onClick={async () => {
+                  await fetch('/api/reviews/vote', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ volumeId, reviewId: r._id, delta: -1 }),
+                  });
+                  await fetchReviews();
+                }}
+              >👎 {r.down || 0}</button>
+            </div>
+          )}
 
           {/* Botones solo si es el autor */}
           {currentUser && r.userId === currentUser.id && (

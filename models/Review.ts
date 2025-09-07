@@ -11,6 +11,15 @@ const ReviewSchema = new Schema(
     content: { type: String, required: true },
     up: { type: Number, default: 0 },
     down: { type: Number, default: 0 },
+    votes: {
+      type: [
+        {
+          userId: { type: String, required: true },
+          value: { type: Number, enum: [1, -1], required: true }
+        }
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );
