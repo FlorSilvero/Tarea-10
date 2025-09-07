@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { z } from 'zod';
-import { createReview, getReviews, voteReview } from '../lib/review.locals';
 
 const FormSchema = z.object({
   rating: z.coerce.number().min(1).max(5),
@@ -23,8 +22,6 @@ export default function ReviewForm({ volumeId }: { volumeId: string }) {
 
         const formEl = e.currentTarget as HTMLFormElement;
         const fd = new FormData(formEl);
-
-        // ⚠️ No trimeamos content antes de validar/mandar, para coincidir con el test STRICT
         const raw = {
           rating: fd.get('rating'),
           content: fd.get('content'),
@@ -41,14 +38,18 @@ export default function ReviewForm({ volumeId }: { volumeId: string }) {
           setSending(true);
           setError(undefined);
 
-          // Llamada al módulo local (mockeable por el test)
-          await Promise.resolve(
-            createReview(volumeId, {
+          // Enviar a la API en vez de usar createReview local
+          const res = await fetch('/api/reviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              volumeId,
               rating: parsed.data.rating,
-              // IMPORTANTE: pasar el contenido tal cual (con espacios) como espera el test
               content: String(raw.content),
-            })
-          );
+            }),
+          });
+
+          if (!res.ok) throw new Error('Error al publicar reseña');
 
           // Éxito → reset y feedback
           formEl.reset();
