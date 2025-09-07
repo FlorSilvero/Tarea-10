@@ -16,6 +16,26 @@ export type Review = {
 };
 
 export default function ReviewList({ volumeId }: { volumeId: string }) {
+  // Obtener el usuario actual desde localStorage
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('auth:user');
+        setCurrentUser(raw ? JSON.parse(raw) : null);
+      } catch {}
+    }
+    const onChange = () => {
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('auth:user');
+          setCurrentUser(raw ? JSON.parse(raw) : null);
+        } catch {}
+      }
+    };
+    window.addEventListener('auth-changed', onChange);
+    return () => window.removeEventListener('auth-changed', onChange);
+  }, []);
   const [rows, setRows] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +81,43 @@ export default function ReviewList({ volumeId }: { volumeId: string }) {
           </div>
           <div className="font-medium">Puntaje: {r.rating}★</div>
           <p>{r.text}</p>
+
+          {/* Botones solo si es el autor */}
+          {currentUser && r.userId === currentUser.id && (
+            <div className="flex gap-2 mt-2">
+              <button
+                className="px-3 py-1 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold hover:bg-yellow-200"
+                onClick={async () => {
+                  const nuevoTexto = prompt('Edita tu reseña:', r.text);
+                  if (nuevoTexto && nuevoTexto !== r.text) {
+                    const nuevoRating = prompt('Edita tu puntaje (1-5):', r.rating.toString());
+                    const ratingNum = Number(nuevoRating);
+                    if (ratingNum >= 1 && ratingNum <= 5) {
+                      await fetch('/api/reviews', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: r._id, content: nuevoTexto, rating: ratingNum }),
+                      });
+                      window.dispatchEvent(new CustomEvent('reviews-changed', { detail: { volumeId } }));
+                    }
+                  }
+                }}
+              >Editar</button>
+              <button
+                className="px-3 py-1 rounded bg-red-100 text-red-800 text-xs font-semibold hover:bg-red-200"
+                onClick={async () => {
+                  if (confirm('¿Seguro que querés eliminar tu reseña?')) {
+                    await fetch('/api/reviews', {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ id: r._id }),
+                    });
+                    window.dispatchEvent(new CustomEvent('reviews-changed', { detail: { volumeId } }));
+                  }
+                }}
+              >Eliminar</button>
+            </div>
+          )}
         </li>
       ))}
     </ul>

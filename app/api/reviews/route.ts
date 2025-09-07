@@ -1,3 +1,45 @@
+
+// PATCH: editar reseña
+export async function PATCH(req: Request) {
+  try {
+    const me = await requireUser();
+    await connectToDB();
+    const { id, content, rating } = await req.json();
+    if (!id || (!content && typeof rating !== "number")) {
+      return NextResponse.json({ error: "Campos inválidos" }, { status: 400 });
+    }
+    const review = await Review.findById(id);
+    if (!review) return NextResponse.json({ error: "No encontrada" }, { status: 404 });
+    if (String(review.userId) !== String(me.id)) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
+    if (content) review.content = String(content).trim();
+    if (typeof rating === "number") review.rating = rating;
+    await review.save();
+    return NextResponse.json({ ok: true, review }, { status: 200 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message ?? "Error" }, { status: 500 });
+  }
+}
+
+// DELETE: eliminar reseña
+export async function DELETE(req: Request) {
+  try {
+    const me = await requireUser();
+    await connectToDB();
+    const { id } = await req.json();
+    if (!id) return NextResponse.json({ error: "Falta id" }, { status: 400 });
+    const review = await Review.findById(id);
+    if (!review) return NextResponse.json({ error: "No encontrada" }, { status: 404 });
+    if (String(review.userId) !== String(me.id)) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
+    await review.deleteOne();
+    return NextResponse.json({ ok: true }, { status: 200 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message ?? "Error" }, { status: 500 });
+  }
+}
 export async function GET(req: Request) {
   try {
     await connectToDB();
