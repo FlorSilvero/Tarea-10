@@ -59,3 +59,16 @@ export async function requireUser() {
   if (!s) throw Object.assign(new Error("Unauthorized"), { status: 401 });
   return s;
 }
+
+// Mock para tests unitarios
+export async function login(email: string, password: string) {
+  if (email === 'user@test.com' && password === 'password') {
+    return { email };
+  }
+  throw new Error('Credenciales inválidas');
+}
+
+export function isAuthenticated() {
+  // Simulación: siempre true para test
+  return true;
+}

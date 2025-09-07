@@ -1,5 +1,3 @@
-// lib/review.locals.ts
-
 import { z } from 'zod';
 
 /** Zod schema para validar una reseña (createdAt siempre string ISO) */
@@ -9,7 +7,7 @@ export const reviewSchema = z.object({
   content: z.string().trim().min(5),
   up: z.number().int().min(0),
   down: z.number().int().min(0),
-  createdAt: z.string(), // ← unificado a string
+  createdAt: z.string(), // ISO
 });
 
 export type Review = {
@@ -38,16 +36,12 @@ const storage = {
   setItem(key: string, val: string): void {
     try {
       if (isBrowser) window.localStorage.setItem(key, val);
-    } catch {
-      /* no-op */
-    }
+    } catch {}
   },
   removeItem(key: string): void {
     try {
       if (isBrowser) window.localStorage.removeItem(key);
-    } catch {
-      /* no-op */
-    }
+    } catch {}
   },
 };
 
@@ -62,21 +56,35 @@ function safeParse<T>(raw: string | null, fallback: T): T {
   }
 }
 
+function uuid(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return (crypto as Crypto).randomUUID();
+  }
+  return 'id-' + Math.random().toString(36).slice(2);
+}
+
+/** Normaliza cualquier objeto parecido a Review a nuestro shape fuerte */
+function normalizeRow(r: any): Review {
+  return {
+    id: String(r?.id ?? r?._id ?? uuid()),
+    rating: Number.isInteger(r?.rating) ? r.rating : 0,
+    content: typeof r?.content === 'string' ? r.content : '',
+    up: typeof r?.up === 'number' && r.up >= 0 ? r.up : 0,
+    down: typeof r?.down === 'number' && r.down >= 0 ? r.down : 0,
+    createdAt:
+      typeof r?.createdAt === 'string'
+        ? r.createdAt
+        : new Date().toISOString(),
+  };
+}
+
 function load(volumeId: string): Review[] {
-  return safeParse<Review[]>(storage.getItem(KEY(volumeId)), []);
+  const arr = safeParse<any[]>(storage.getItem(KEY(volumeId)), []);
+  return arr.map(normalizeRow);
 }
 
 function save(volumeId: string, rows: Review[]): void {
   storage.setItem(KEY(volumeId), JSON.stringify(rows));
-}
-
-function uuid(): string {
-  // Usa crypto.randomUUID si está disponible (browser moderno / node 19+)
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return (crypto as Crypto).randomUUID();
-  }
-  // Fallback simple
-  return 'id-' + Math.random().toString(36).slice(2);
 }
 
 function assertValidInput(rating: number, content: string) {
@@ -87,7 +95,7 @@ function assertValidInput(rating: number, content: string) {
   if (trimmed.length < 5) {
     throw new Error('contenido inválido (al menos 5 caracteres después de trim)');
   }
-  // Validación de límite máximo de palabras (ejemplo: 100 palabras)
+  // Límite opcional de palabras (100)
   const maxWords = 100;
   const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
   if (wordCount > maxWords) {
@@ -116,8 +124,10 @@ export function createReview(
 
   const rows = load(volumeId);
   rows.push(normalized);
-  // Ordenar desc por fecha (más nuevo primero)
-  rows.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Ordenar desc por fecha
+  rows.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
   save(volumeId, rows);
 
   return normalized;
@@ -125,25 +135,36 @@ export function createReview(
 
 export function getReviews(volumeId: string): Review[] {
   const rows = load(volumeId);
-  // Garantizar orden desc por fecha
-  return [...rows].sort(
+  // Aseguramos shape + orden (por si hay datos legacy sin up/down)
+  const norm = rows.map(normalizeRow);
+  norm.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
+  return norm;
 }
 
+/**
+ * delta: +1 para like, -1 para dislike
+ */
 export function voteReview(volumeId: string, id: string, delta: number): void {
-  if (delta !== 1 && delta !== -1) return; // no-op para inválidos
+  if (delta !== 1 && delta !== -1) return; // no-op
 
-  const rows = load(volumeId);
-  const idx = rows.findIndex((r) => r.id === id);
+  // Cargar normalizado
+  const rows = load(volumeId).map(normalizeRow);
+
+  // Admitimos id o _id por compatibilidad
+  const idx = rows.findIndex((r: any) => r.id === id || r._id === id);
   if (idx === -1) return;
 
   const r = rows[idx];
-  if (delta === 1) {
-    r.up = Math.max(0, (r.up ?? 0) + 1);
-  } else {
-    r.down = Math.max(0, (r.down ?? 0) + 1);
-  }
+  const up = Number.isFinite(r.up) ? r.up : 0;
+  const down = Number.isFinite(r.down) ? r.down : 0;
 
+  const updated: Review =
+    delta === 1
+      ? { ...r, up: up + 1 }
+      : { ...r, down: down + 1 };
+
+  rows[idx] = updated;
   save(volumeId, rows);
 }
