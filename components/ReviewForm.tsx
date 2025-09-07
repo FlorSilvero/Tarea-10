@@ -1,3 +1,4 @@
+// components/ReviewForm.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -38,7 +39,7 @@ export default function ReviewForm({ volumeId }: { volumeId: string }) {
           setSending(true);
           setError(undefined);
 
-          // Enviar a la API en vez de usar createReview local
+          // Enviar la reseña a la API real
           const res = await fetch('/api/reviews', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -51,11 +52,8 @@ export default function ReviewForm({ volumeId }: { volumeId: string }) {
 
           if (!res.ok) throw new Error('Error al publicar reseña');
 
-          // Éxito → reset y feedback
           formEl.reset();
           setOk(true);
-
-          // Notificamos a la lista para que recargue
           window.dispatchEvent(new CustomEvent('reviews-changed', { detail: { volumeId } }));
         } catch (err) {
           setOk(false);
@@ -73,9 +71,13 @@ export default function ReviewForm({ volumeId }: { volumeId: string }) {
           aria-label="Puntaje"
           defaultValue=""
         >
-          <option value="" disabled hidden>Seleccioná un puntaje</option>
+          <option value="" disabled hidden>
+            Seleccioná un puntaje
+          </option>
           {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>{n} ★</option>
+            <option key={n} value={n}>
+              {n} ★
+            </option>
           ))}
         </select>
 
