@@ -1,14 +1,23 @@
-// src/models/User.ts
-import { Schema, model, models } from "mongoose";
+import mongoose, { Schema, Types, model, models } from 'mongoose';
 
-const UserSchema = new Schema(
-  {
-    email: { type: String, unique: true, required: true, index: true },
-    passwordHash: { type: String, required: true },
-    name: { type: String, default: "" },
-    favorites: { type: [String], default: [] }, // array de volumeId
-  },
-  { timestamps: true }
-);
 
-export default models.User || model("User", UserSchema);
+export interface IUser {
+_id: Types.ObjectId;
+email: string;
+name?: string;
+passwordHash: string;
+favorites: string[]; // Google Books volumeId
+createdAt: Date;
+updatedAt: Date;
+}
+
+
+const UserSchema = new Schema<IUser>({
+email: { type: String, unique: true, required: true, index: true },
+name: { type: String },
+passwordHash: { type: String, required: true },
+favorites: { type: [String], default: [] },
+}, { timestamps: true });
+
+
+export default models.User || model<IUser>('User', UserSchema);

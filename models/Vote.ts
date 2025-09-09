@@ -1,15 +1,24 @@
-import { Schema, model, models } from "mongoose";
+import { Schema, Types, model, models } from 'mongoose';
 
-const VoteSchema = new Schema(
-  {
-  userId: { type: String, required: true, index: true },
-    reviewId: { type: Schema.Types.ObjectId, ref: "Review", required: true, index: true },
-    type: { type: String, enum: ["up", "down"], required: true },
-  },
-  { timestamps: true }
-);
 
-// 🔑 Evita que un mismo usuario vote dos veces la misma reseña
-VoteSchema.index({ userId: 1, reviewId: 1 }, { unique: true });
+export interface IVote {
+_id: Types.ObjectId;
+reviewId: Types.ObjectId; // ref Review
+userId: Types.ObjectId; // ref User
+type: 1 | -1; // like = 1, dislike = -1
+createdAt: Date;
+updatedAt: Date;
+}
 
-export default models.Vote || model("Vote", VoteSchema);
+
+const VoteSchema = new Schema<IVote>({
+reviewId: { type: Schema.Types.ObjectId, ref: 'Review', required: true, index: true },
+userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+type: { type: Number, enum: [1, -1], required: true },
+}, { timestamps: true });
+
+
+VoteSchema.index({ reviewId: 1, userId: 1 }, { unique: true });
+
+
+export default models.Vote || model<IVote>('Vote', VoteSchema);
