@@ -19,11 +19,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <header className="border-b bg-white">
           <nav className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
-            <Link href="/" className="font-semibold tracking-tight text-lg">
-              Mundos en palabras
-            </Link>
-            <Link href="/search" className="text-sm underline">
-              Buscar
+            <div className="flex items-center gap-6">
+              <Link href="/" className="font-semibold tracking-tight text-lg">
+                Mundos en palabras
+              </Link>
+              <Link href="/search" className="text-sm underline">
+                Buscar
+              </Link>
+            </div>
+            <Link href="/me">
+              <button className="px-4 py-2 rounded bg-violet-600 text-white font-semibold hover:bg-violet-700 transition">Mi perfil</button>
             </Link>
           </nav>
         </header>

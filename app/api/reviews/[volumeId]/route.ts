@@ -7,13 +7,15 @@ export const runtime = "nodejs";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { volumeId: string } }
+  context: { params: { volumeId: string } }
 ) {
   await connectToDB();
 
   const url = new URL(_req.url);
   const page = Number(url.searchParams.get("page") ?? 1);
   const size = Number(url.searchParams.get("size") ?? 10);
+
+  const { params } = await Promise.resolve(context);
 
   const [items, total] = await Promise.all([
     Review.find({ volumeId: params.volumeId })

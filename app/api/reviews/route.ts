@@ -86,16 +86,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Campos inválidos" }, { status: 400 });
     }
 
-    if (!Types.ObjectId.isValid(me.id)) {
-      return NextResponse.json({ error: "Usuario inválido" }, { status: 400 });
+    // userId como string
+    const userId = me.id;
+
+    // Obtener el título del libro desde Google Books
+    let bookTitle = '';
+    try {
+      const volume = await import('@/lib/googleBooks').then(m => m.getVolume(volumeId));
+      bookTitle = volume?.volumeInfo?.title ?? '';
+    } catch (e) {
+      bookTitle = '';
     }
-    const userId = new Types.ObjectId(me.id);
 
     const doc = await Review.create({
       userId,
       userEmail: me.email ?? '',
       userName: me.name ?? '',
       volumeId,
+      bookTitle,
       rating,
       content: String(content).trim(),
     });
@@ -110,6 +118,7 @@ export async function POST(req: Request) {
       rating: r.rating,
       text: r.content,
       createdAt: r.createdAt,
+      bookTitle: r.bookTitle ?? '',
       up: r.up ?? 0,
       down: r.down ?? 0
     }));

@@ -18,7 +18,7 @@ export default function ReviewList({ volumeId }: { volumeId: string }) {
   const [rows, setRows] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usuarioActual, setUsuarioActual] = useState<{ email: string } | null>(null);
+  const [usuarioActual, setUsuarioActual] = useState<{ email: string; id?: string } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [editRating, setEditRating] = useState<number>(1);
@@ -30,7 +30,7 @@ export default function ReviewList({ volumeId }: { volumeId: string }) {
         const res = await fetch('/api/me');
         if (res.ok) {
           const data = await res.json();
-          setUsuarioActual({ email: data.email });
+          setUsuarioActual({ email: data.email, id: data.id });
         }
       } catch {}
     }
@@ -59,7 +59,9 @@ export default function ReviewList({ volumeId }: { volumeId: string }) {
               _id: d._id ?? d.id ?? String(Math.random()),
               volumeId: d.volumeId,
               userId: d.userId,
-              userEmail: d.user?.email ?? d.userEmail ?? '',
+              userEmail: d.userEmail ?? '',
+              userName: d.userName ?? '',
+              bookTitle: d.bookTitle ?? '',
               rating: d.rating ?? d.score ?? 0,
               text: d.text ?? d.content ?? '',
               createdAt: d.createdAt,
@@ -165,49 +167,51 @@ export default function ReviewList({ volumeId }: { volumeId: string }) {
             >
               Dislike
             </button>
-            {usuarioActual?.email && r.userEmail === usuarioActual.email && (
-              <>
-                {editId === r._id ? (
-                  <form onSubmit={handleEditSubmit} className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      value={editContent}
-                      onChange={e => setEditContent(e.target.value)}
-                      className="border rounded px-2 py-1 text-xs"
-                      placeholder="Nuevo texto"
-                      required
-                    />
-                    <select
-                      value={editRating}
-                      onChange={e => setEditRating(Number(e.target.value))}
-                      className="border rounded px-2 py-1 text-xs"
-                      required
-                    >
-                      {[1,2,3,4,5].map(n => (
-                        <option key={n} value={n}>{n}★</option>
-                      ))}
-                    </select>
-                    <button type="submit" className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-semibold hover:bg-blue-200">Guardar</button>
-                    <button type="button" className="px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs font-semibold hover:bg-gray-200" onClick={() => setEditId(null)}>Cancelar</button>
-                  </form>
-                ) : (
-                  <>
-                    <button
-                      className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold hover:bg-yellow-200"
-                      onClick={() => handleEdit(r._id!, r.text, r.rating)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs font-semibold hover:bg-gray-200"
-                      onClick={() => handleDelete(r._id!)}
-                    >
-                      Eliminar
-                    </button>
-                  </>
-                )}
-              </>
-            )}
+            {((usuarioActual?.email && r.userEmail === usuarioActual.email) || (usuarioActual?.id && r.userId === usuarioActual.id))
+              ? (
+                <>
+                  {editId === r._id ? (
+                    <form onSubmit={handleEditSubmit} className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={editContent}
+                        onChange={e => setEditContent(e.target.value)}
+                        className="border rounded px-2 py-1 text-xs"
+                        placeholder="Nuevo texto"
+                        required
+                      />
+                      <select
+                        value={editRating}
+                        onChange={e => setEditRating(Number(e.target.value))}
+                        className="border rounded px-2 py-1 text-xs"
+                        required
+                      >
+                        {[1,2,3,4,5].map(n => (
+                          <option key={n} value={n}>{n}★</option>
+                        ))}
+                      </select>
+                      <button type="submit" className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-semibold hover:bg-blue-200">Guardar</button>
+                      <button type="button" className="px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs font-semibold hover:bg-gray-200" onClick={() => setEditId(null)}>Cancelar</button>
+                    </form>
+                  ) : (
+                    <>
+                      <button
+                        className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold hover:bg-yellow-200"
+                        onClick={() => handleEdit(r._id!, r.text, r.rating)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs font-semibold hover:bg-gray-200"
+                        onClick={() => handleDelete(r._id!)}
+                      >
+                        Eliminar
+                      </button>
+                    </>
+                  )}
+                </>
+              )
+              : null}
           </div>
         </li>
       ))}
