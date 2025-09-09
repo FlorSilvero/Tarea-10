@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Image from 'next/image';
+import BookCard from '@/components/BookCard';
 import SearchBar from '@/components/SearchBar';
 
 type Book = {
@@ -45,37 +45,7 @@ function BookResults() {
     <ul className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
       {books.map((b) => (
         <li key={b.id}>
-          <a
-            href={`/book/${b.id}`}
-            className="group block rounded-2xl border border-violet-100 bg-white/70 p-4 shadow-sm backdrop-blur-sm
-                       hover:shadow-[0_16px_40px_-16px_rgba(139,77,255,.35)] hover:-translate-y-0.5 transition"
-          >
-            <div className="flex gap-4">
-              {b.volumeInfo.imageLinks?.thumbnail ? (
-                <Image
-                  src={b.volumeInfo.imageLinks.thumbnail}
-                  alt={b.volumeInfo.title ?? 'Portada'}
-                  width={80}
-                  height={112}
-                  className="w-20 h-28 object-cover rounded-xl border border-violet-100 shadow-sm"
-                />
-              ) : (
-                <div className="w-20 h-28 rounded-xl border border-violet-100 bg-[#ede6ff] grid place-items-center text-xs text-violet-700/70">
-                  Sin portada
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <h3 className="text-gray-900 text-lg mb-1 font-semibold group-hover:underline line-clamp-2">
-                  {b.volumeInfo.title}
-                </h3>
-                <p className="text-gray-600 text-sm mb-1 line-clamp-1">{b.volumeInfo.authors?.join(', ')}</p>
-                <p className="text-gray-500 text-xs">{b.volumeInfo.publishedDate}</p>
-                {b.volumeInfo.description && (
-                  <p className="mt-2 text-gray-700 text-sm line-clamp-3">{b.volumeInfo.description}</p>
-                )}
-              </div>
-            </div>
-          </a>
+          <BookCard v={b} />
         </li>
       ))}
     </ul>
