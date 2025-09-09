@@ -1,4 +1,12 @@
 
+import { NextResponse } from "next/server";
+import { connectToDB } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
+import Review from "@/models/Review";
+import { Types } from "mongoose";
+
+export const runtime = "nodejs";
+
 // PATCH: editar reseña
 export async function PATCH(req: Request) {
   try {
@@ -59,22 +67,15 @@ export async function GET(req: Request) {
       rating: r.rating,
       text: r.content,
       createdAt: r.createdAt,
-      up: r.up ?? 0,
-      down: r.down ?? 0
+      up: r.upCount ?? 0,
+      down: r.downCount ?? 0
     }));
-    return NextResponse.json(result, { status: 200 });
+  return NextResponse.json(result, { status: 200 });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Error' }, { status: 500 });
   }
 }
-// src/app/api/reviews/route.ts  (POST)
-import { NextResponse } from "next/server";
-import { connectToDB } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
-import Review from "@/models/Review";
-import { Types } from "mongoose";
 
-export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
