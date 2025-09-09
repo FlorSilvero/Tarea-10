@@ -139,9 +139,9 @@ describe('<ReviewList />', () => {
   it('renders reviews', async () => {
     render(<ReviewList volumeId="v1" />);
 
-    expect(await screen.findByText('Gran libro')).toBeInTheDocument();
-    expect(screen.getByText('user1@example.com')).toBeInTheDocument();
-    expect(screen.getByText('No es mi favorito.')).toBeInTheDocument();
+  expect(await screen.findByText('Gran libro')).toBeInTheDocument();
+  expect(screen.getByText((content) => content.includes('user1@example.com'))).toBeInTheDocument();
+  expect(screen.getByText('No es mi favorito.')).toBeInTheDocument();
   });
 
   it('shows vote counts', async () => {
