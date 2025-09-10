@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import * as db from '../review.locals';
-import React from 'react';
+
 
 describe('CRUD reviews', () => {
   it('crea una reseña válida', () => {
