@@ -24,6 +24,7 @@ describe('CRUD reviews', () => {
     const r = db.createReview('vol1', { rating: 5, content: 'Votame' });
     db.voteReview('vol1', r.id, 1);
     const reviews = db.getReviews('vol1');
-    expect(reviews[0].up).toBe(1);
+    const voted = reviews.find(rv => rv.id === r.id);
+    expect(voted?.up).toBe(1);
   });
 });
