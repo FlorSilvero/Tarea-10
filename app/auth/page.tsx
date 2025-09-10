@@ -108,7 +108,6 @@ const Submit = ({ children, disabled }: { children: React.ReactNode; disabled?: 
 // 🧩 Componente principal (ponelo en /app/auth/page.tsx)
 export default function AuthPage() {
   const [tab, setTab] = React.useState<"login" | "register">("login");
-  const [demoMode, setDemoMode] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [msg, setMsg] = React.useState<{ type: "success" | "error" | "", text: string }>({ type: "", text: "" });
   const [current, setCurrent] = React.useState<any>(null);
@@ -123,16 +122,9 @@ export default function AuthPage() {
   return (
     <div className="min-h-[80vh] w-full bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
       <Card>
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div className="flex gap-2">
-            <TabButton active={tab === "login"} onClick={() => setTab("login")}>Ingresar</TabButton>
-            <TabButton active={tab === "register"} onClick={() => setTab("register")}>Crear cuenta</TabButton>
-          </div>
-
-          <label className="flex items-center gap-2 text-sm text-gray-600 select-none">
-            <input type="checkbox" className="h-4 w-4" checked={demoMode} onChange={e => setDemoMode(e.target.checked)} />
-            Modo demo
-          </label>
+        <div className="mb-4 flex items-center gap-2">
+          <TabButton active={tab === "login"} onClick={() => setTab("login")}>Ingresar</TabButton>
+          <TabButton active={tab === "register"} onClick={() => setTab("register")}>Crear cuenta</TabButton>
         </div>
 
         {msg.text && (
@@ -146,14 +138,12 @@ export default function AuthPage() {
         {current ? (
           <LoggedInView user={current} onLogout={() => { logout(); setMsg({ type: "success", text: "Sesión cerrada." }); }} />
         ) : tab === "login" ? (
-          <LoginForm demoMode={demoMode} setLoading={setLoading} setMsg={setMsg} />
+          <LoginForm setLoading={setLoading} setMsg={setMsg} />
         ) : (
-          <RegisterForm demoMode={demoMode} setLoading={setLoading} setMsg={setMsg} />
+          <RegisterForm setLoading={setLoading} setMsg={setMsg} />
         )}
 
-        <p className="mt-4 text-center text-xs text-gray-500">
-          Tip: el <strong>Modo demo</strong> genera un <code>userId</code> con formato de ObjectId (24 hex) para que puedas probar reseñas sin backend.
-        </p>
+  {/* Modo demo eliminado */}
       </Card>
     </div>
   );
@@ -176,7 +166,7 @@ function LoggedInView({ user, onLogout }: { user: any; onLogout: () => void }) {
   );
 }
 
-function LoginForm({ demoMode, setLoading, setMsg }: { demoMode: boolean; setLoading: (v: boolean) => void; setMsg: (m: { type: "success" | "error" | "", text: string }) => void }) {
+function LoginForm({ setLoading, setMsg }: { setLoading: (v: boolean) => void; setMsg: (m: { type: "success" | "error" | "", text: string }) => void }) {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
 
@@ -184,13 +174,6 @@ function LoginForm({ demoMode, setLoading, setMsg }: { demoMode: boolean; setLoa
     e.preventDefault();
     setMsg({ type: "", text: "" });
 
-    if (demoMode) {
-      const fake = { id: generateObjectId(), email, name: email.split("@")[0] || "demo", token: undefined };
-      saveUserInLocalStorage(fake);
-      setMsg({ type: "success", text: "Ingresaste en modo demo." });
-      window.location.href = "/";
-      return;
-    }
 
     if (!email || !password) {
       setMsg({ type: "error", text: "Completá email y contraseña." });
@@ -234,7 +217,7 @@ function LoginForm({ demoMode, setLoading, setMsg }: { demoMode: boolean; setLoa
   );
 }
 
-function RegisterForm({ demoMode, setLoading, setMsg }: { demoMode: boolean; setLoading: (v: boolean) => void; setMsg: (m: { type: "success" | "error" | "", text: string }) => void }) {
+function RegisterForm({ setLoading, setMsg }: { setLoading: (v: boolean) => void; setMsg: (m: { type: "success" | "error" | "", text: string }) => void }) {
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -243,13 +226,6 @@ function RegisterForm({ demoMode, setLoading, setMsg }: { demoMode: boolean; set
     e.preventDefault();
     setMsg({ type: "", text: "" });
 
-    if (demoMode) {
-      const fake = { id: generateObjectId(), email, name: name || email.split("@")[0] || "demo" };
-      saveUserInLocalStorage(fake);
-      setMsg({ type: "success", text: "Cuenta creada en modo demo." });
-      window.location.href = "/";
-      return;
-    }
 
     if (!name || !email || !password) {
       setMsg({ type: "error", text: "Completá nombre, email y contraseña." });
