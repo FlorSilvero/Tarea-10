@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 export async function GET(
   _req: Request,
-  context: { params: { volumeId: string } }
+  context: { params: Promise<{ volumeId: string }> } // <-- Promise aquí
 ) {
   await connectToDB();
 
@@ -15,15 +15,15 @@ export async function GET(
   const page = Number(url.searchParams.get("page") ?? 1);
   const size = Number(url.searchParams.get("size") ?? 10);
 
-  const { params } = await Promise.resolve(context);
+  const { volumeId } = await context.params; // <-- await aquí
 
   const [items, total] = await Promise.all([
-    Review.find({ volumeId: params.volumeId })
+    Review.find({ volumeId })
       .sort({ createdAt: -1 })
       .skip((page - 1) * size)
       .limit(size)
       .lean(),
-    Review.countDocuments({ volumeId: params.volumeId }),
+    Review.countDocuments({ volumeId }),
   ]);
 
   return NextResponse.json({ items, total, page, size });

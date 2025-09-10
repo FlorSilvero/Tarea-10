@@ -30,15 +30,21 @@ global.localStorage = new LocalStorageMock();
 })();
 
 // ── matchMedia dummy (algunas libs lo requieren) ──
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: (q: string) => ({
-    matches: false, media: q, onchange: null,
-    addListener: () => {}, removeListener: () => {},
-    addEventListener: () => {}, removeEventListener: () => {},
-    dispatchEvent: () => false,
-  }),
-});
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (q: string) => ({
+      matches: false,
+      media: q,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
+}
 
 // ── (si usas Next App Router en componentes): mock super simple ──
 vi.mock('next/navigation', () => {

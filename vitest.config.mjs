@@ -13,7 +13,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve('./src'),
+      '@': resolve('.'),
       'lib/auth': resolve('./lib/__mocks__/auth.ts')
     }
   }

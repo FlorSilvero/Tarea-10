@@ -1,28 +1,31 @@
+// app/book/[volumeId]/page.tsx
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import { getVolume, bestImage } from '@/lib/googleBooks';
 import ReviewForm from '@/components/ReviewForm';
 import ReviewList from '@/components/ReviewList';
 
-type Params = { volumeId: string };
+// Tipos explícitos como Promise (compatibles con el checker de Next 15)
+type Params = Promise<{ volumeId: string }>;
+type Search = Promise<Record<string, string | string[] | undefined>>;
 
-// (opcional pero recomendado para SEO)
+// --- SEO ---
 export async function generateMetadata(
-  { params }: { params: Promise<Params> }
+  { params }: { params: Params }
 ): Promise<Metadata> {
-  const { volumeId } = await params;
-  // Si querés, podrías hacer un fetch mínimo para armar el title con el nombre
-  // del libro. Para no duplicar requests, lo dejamos simple:
+  const { volumeId } = await params; // <- await
   return {
     title: `Libro ${volumeId} | Mi Librería`,
     description: `Detalles y reseñas del libro ${volumeId}`,
   };
 }
 
+// --- Page ---
 export default async function Page(
-  { params }: { params: Promise<Params> }
+  { params, searchParams }: { params: Params; searchParams: Search }
 ) {
-  const { volumeId } = await params;
+  const { volumeId } = await params;          // <- await
+  const _sp = await searchParams;             // <- por si lo usás luego
 
   const book = await getVolume(volumeId);
   const v = book.volumeInfo;
@@ -58,7 +61,7 @@ export default async function Page(
             </p>
             {v.categories?.length ? (
               <div className="mt-2 flex flex-wrap gap-2">
-                {v.categories.map((c) => (
+                {v.categories.map((c: string) => (
                   <span
                     key={c}
                     className="rounded-full border border-violet-200 bg-[#f7f3ff] px-3 py-1 text-xs text-gray-700"
@@ -81,7 +84,7 @@ export default async function Page(
         </div>
       </div>
 
-      {/* Reseñas locales */}
+      {/* Reseñas */}
       <section className="space-y-4">
         <ReviewForm volumeId={volumeId} />
         <ReviewList volumeId={volumeId} />
