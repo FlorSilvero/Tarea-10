@@ -5,9 +5,14 @@ import { connectToDB } from '@/lib/db';
 import Review from '@/models/Review';
 import mongoose from 'mongoose';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const user = await requireUser();
+    const user = await requireUser({
+      ...req,
+      headers: {
+        get: (key: string) => req.headers.get(key) ?? undefined
+      }
+    });
     await connectToDB();
 
     const filters: Record<string, any> = {};

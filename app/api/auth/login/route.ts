@@ -28,29 +28,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
     }
 
-    // Respondemos primero
+    // Genera el JWT real y lo setea en la cookie
+    const token = await createSession({
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+    });
     const res = NextResponse.json({
       ok: true,
       user: { id: user._id, email: user.email, name: user.name },
     }, { status: 200 });
-
-    if (process.env.NODE_ENV !== "test") {
-      // Producción/desarrollo real: usá tu sesión real
-      await createSession({
-        id: user._id.toString(),
-        email: user.email,
-        name: user.name,
-      });
-    } else {
-      // 🔹 En test: seteamos una cookie dummy para pasar la aserción
-      res.cookies.set('session', 'test-token', {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60,
-      });
-    }
-
+    res.cookies.set('session', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
     return res;
   } catch (e: any) {
     return NextResponse.json(

@@ -44,3 +44,14 @@ app.post('/api/login', async (req, res) => {
 });
 
 export default app;
+// --- ENDPOINT /api/reviews ---
+import { POST as reviewsPostHandler } from './app/api/reviews/route';
+app.post('/api/reviews', async (req, res) => {
+  const nextReq = new Request('http://localhost/api/reviews', {
+    method: 'POST',
+    body: JSON.stringify(req.body),
+    headers: { 'Content-Type': 'application/json', cookie: req.headers.cookie || '' },
+  });
+  const nextRes = await reviewsPostHandler(nextReq);
+  await adaptNextResponse(nextRes, res);
+});

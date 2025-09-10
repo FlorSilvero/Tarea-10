@@ -11,21 +11,11 @@ type UserToken = { sub: string; email: string; name?: string };
 export async function createSession(user: { id: string; email: string; name?: string }) {
   const token = await new SignJWT({ email: user.email, name: user.name })
     .setProtectedHeader({ alg: "HS256" })
-    .setSubject(user.id)                // 👈 acá guardamos el _id del user
+    .setSubject(user.id)
     .setIssuedAt()
     .setExpirationTime(EXPIRES_IN)
     .sign(JWT_SECRET);
-
-  const jar = await cookies();
-  jar.set({
-    name: COOKIE_NAME,
-    value: token,
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    // opcional: maxAge en segundos (ej 7 días)
-  });
+  return token;
 }
 
 export async function destroySession() {
@@ -41,10 +31,18 @@ export async function destroySession() {
   });
 }
 
-export async function getSession(): Promise<{ id: string; email?: string; name?: string } | null> {
-  try {
+export async function getSession(req: RequireUserRequest) {
+  let token;
+  if (req && req.headers) {
+    // Para tests con Express
+    const cookieHeader = req.headers.get?.('cookie') || (typeof req.headers.cookie === 'string' ? req.headers.cookie : '');
+    token = cookieHeader?.match(/session=([^;]+)/)?.[1];
+  } else {
+    // Next.js normal
     const jar = await cookies();
-    const token = jar.get(COOKIE_NAME)?.value;
+    token = jar.get(COOKIE_NAME)?.value;
+  }
+  try {
     if (!token) return null;
     const { payload } = await jwtVerify<UserToken>(token, JWT_SECRET);
     if (!payload?.sub) return null;
@@ -54,8 +52,23 @@ export async function getSession(): Promise<{ id: string; email?: string; name?:
   }
 }
 
-export async function requireUser() {
-  const s = await getSession();
+interface RequireUserRequest {
+  headers?: {
+    get?: (name: string) => string | undefined;
+    cookie?: string;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
+
+interface RequireUserSession {
+  id: string;
+  email: string;
+  name?: string;
+}
+
+export async function requireUser(req: RequireUserRequest): Promise<RequireUserSession> {
+  const s = await getSession(req);
   if (!s) throw Object.assign(new Error("Unauthorized"), { status: 401 });
   return s;
 }

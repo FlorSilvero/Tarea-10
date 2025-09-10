@@ -59,3 +59,55 @@ describe('API: Register y Login', () => {
     expect(res.headers['set-cookie']).toBeDefined();
   });
 });
+
+    // --- TESTS DE REVIEWS CRUD Y AUTORIZACIÓN ---
+    describe('API: Reviews CRUD y autorización', () => {
+      let cookie: string;
+
+      beforeAll(async () => {
+        // Registra y loguea un usuario para obtener la cookie
+        await request(app)
+          .post('/api/register')
+          .send({ email: 'reviewer@test.com', password: '123456' });
+
+        const res = await request(app)
+          .post('/api/login')
+          .send({ email: 'reviewer@test.com', password: '123456' });
+
+      const rawCookie = res.headers['set-cookie'][0];
+      // Extrae solo el valor del token
+      const match = rawCookie.match(/session=([^;]+)/);
+      cookie = match ? `session=${match[1]}` : rawCookie;
+      console.log('Cookie usada en tests:', cookie);
+      });
+
+      it('no permite crear reseña sin autenticación', async () => {
+        const res = await request(app)
+          .post('/api/reviews')
+          .send({ volumeId: 'vol1', rating: 5, content: 'Excelente libro' });
+
+        expect(res.status).toBe(401); // o 403 según tu middleware
+      });
+
+      it('crea reseña válida con usuario autenticado', async () => {
+        const res = await request(app)
+          .post('/api/reviews')
+          .set('Cookie', cookie)
+          .send({ volumeId: 'vol1', rating: 5, content: 'Excelente libro' });
+
+  expect(res.status).toBe(201);
+  expect(Array.isArray(res.body)).toBe(true);
+  expect(res.body[0]).toHaveProperty('volumeId', 'vol1');
+  expect(res.body[0]).toHaveProperty('rating', 5);
+      });
+
+      it('rechaza reseña con datos inválidos', async () => {
+        const res = await request(app)
+          .post('/api/reviews')
+          .set('Cookie', cookie)
+          .send({ volumeId: '', rating: 0, content: 'ok' });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toHaveProperty('error');
+      });
+    });

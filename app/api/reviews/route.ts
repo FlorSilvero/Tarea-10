@@ -10,7 +10,12 @@ export const runtime = "nodejs";
 // PATCH: editar reseña
 export async function PATCH(req: Request) {
   try {
-    const me = await requireUser();
+  const me = await requireUser({
+    ...req,
+    headers: {
+      get: (key: string) => req.headers.get(key) ?? undefined
+    }
+  });
     await connectToDB();
     const { id, content, rating } = await req.json();
     if (!id || (!content && typeof rating !== "number")) {
@@ -26,14 +31,21 @@ export async function PATCH(req: Request) {
     await review.save();
     return NextResponse.json({ ok: true, review }, { status: 200 });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? "Error" }, { status: 500 });
+    const status = e?.status ?? (e?.name === 'ZodError' ? 400 : 500);
+    const message = e?.message ?? 'Internal Error';
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
 // DELETE: eliminar reseña
 export async function DELETE(req: Request) {
   try {
-    const me = await requireUser();
+  const me = await requireUser({
+    ...req,
+    headers: {
+      get: (key: string) => req.headers.get(key) ?? undefined
+    }
+  });
     await connectToDB();
     const { id } = await req.json();
     if (!id) return NextResponse.json({ error: "Falta id" }, { status: 400 });
@@ -45,7 +57,9 @@ export async function DELETE(req: Request) {
     await review.deleteOne();
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? "Error" }, { status: 500 });
+    const status = e?.status ?? (e?.name === 'ZodError' ? 400 : 500);
+    const message = e?.message ?? 'Internal Error';
+    return NextResponse.json({ error: message }, { status });
   }
 }
 export async function GET(req: Request) {
@@ -72,14 +86,21 @@ export async function GET(req: Request) {
     }));
   return NextResponse.json(result, { status: 200 });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? 'Error' }, { status: 500 });
+    const status = e?.status ?? (e?.name === 'ZodError' ? 400 : 500);
+    const message = e?.message ?? 'Internal Error';
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
 
 export async function POST(req: Request) {
   try {
-    const me = await requireUser(); // requiere estar logueado
+    const me = await requireUser({
+      ...req,
+      headers: {
+        get: (key: string) => req.headers.get(key) ?? undefined
+      }
+    }); // requiere estar logueado
     await connectToDB();
 
     const { volumeId, rating, content } = await req.json();
@@ -125,6 +146,8 @@ export async function POST(req: Request) {
     }));
     return NextResponse.json(reviewsWithVotes, { status: 201 });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? 'Error' }, { status: 500 });
+    const status = e?.status ?? (e?.name === 'ZodError' ? 400 : 500);
+    const message = e?.message ?? 'Internal Error';
+    return NextResponse.json({ error: message }, { status });
   }
 }
