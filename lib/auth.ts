@@ -61,14 +61,10 @@ export async function requireUser() {
 }
 
 // Mock para tests unitarios
-export async function login(email: string, password: string) {
-  if (email === 'user@test.com' && password === 'password') {
-    return { email };
-  }
-  throw new Error('Credenciales inválidas');
+export async function login(email: string, password: string): Promise<{ email: string }> {
+  throw new Error('Not implemented: use API');
 }
 
 export function isAuthenticated() {
-  // Simulación: siempre true para test
-  return true;
+  return false;
 }

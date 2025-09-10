@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Mock } from 'vitest';
 import ReviewList from '../ReviewList';
+import React from 'react';
 
 // Helper para crear reseñas de prueba rápido
 function makeReview(overrides: Partial<any> = {}) {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 // Suponiendo que tienes un middleware de autorización
 import { authorize } from '../middleware';
+import React from 'react';
 
 describe('middleware autorización', () => {
   it('permite acceso a usuario autorizado', () => {

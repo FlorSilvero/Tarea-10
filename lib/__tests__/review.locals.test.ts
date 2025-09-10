@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createReview, getReviews, voteReview } from '../review.locals';
+import React from 'react';
 
 describe('review.locals', () => {
   beforeEach(() => {

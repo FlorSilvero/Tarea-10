@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 // Suponiendo que tienes lógica para verificar si el usuario puede editar/eliminar/votar
 import { canEdit, canVote } from '../authz';
+import React from 'react';
 
 describe('casos de autorización', () => {
   it('permite editar si es el autor', () => {

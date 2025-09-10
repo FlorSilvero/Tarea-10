@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 // Suponiendo que tienes funciones como login, logout, isAuthenticated
 import * as auth from '../auth';
+import React from 'react';
 
 describe('auth', () => {
   it('debería autenticar usuario válido', async () => {

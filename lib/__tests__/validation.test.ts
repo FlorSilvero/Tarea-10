@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { reviewSchema } from '../review.locals';
+import React from 'react';
 
 describe('validación de reseñas', () => {
   it('acepta reseña válida', () => {
