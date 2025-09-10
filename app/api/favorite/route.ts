@@ -7,7 +7,12 @@ export async function POST(req: Request) {
   try {
     const { volumeId } = await req.json();
     if (!volumeId) return NextResponse.json({ error: 'Falta volumeId' }, { status: 400 });
-    const user = await requireUser();
+    const user = await requireUser({
+      ...req,
+      headers: {
+        get: (key: string) => req.headers.get(key) ?? undefined
+      }
+    });
     await connectToDB();
     const u = await User.findById(user.id);
     if (!u) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
@@ -25,7 +30,12 @@ export async function DELETE(req: Request) {
   try {
     const { volumeId } = await req.json();
     if (!volumeId) return NextResponse.json({ error: 'Falta volumeId' }, { status: 400 });
-    const user = await requireUser();
+    const user = await requireUser({
+      ...req,
+      headers: {
+        get: (key: string) => req.headers.get(key) ?? undefined
+      }
+    });
     await connectToDB();
     const u = await User.findById(user.id);
     if (!u) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });

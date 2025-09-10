@@ -10,7 +10,12 @@ export async function PATCH(request: Request) {
   }
   // Obtener usuario actual
   const { requireUser } = await import('@/lib/auth');
-  const me = await requireUser();
+  const me = await requireUser({
+    ...request,
+    headers: {
+      get: (key: string) => request.headers.get(key) ?? undefined
+    }
+  });
   await connectToDB();
   const review = await Review.findById(reviewId);
   if (!review) {
