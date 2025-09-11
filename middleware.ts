@@ -1,33 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server';
+
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
-
-const COOKIE_NAME = process.env.COOKIE_NAME || 'session';
-const secret = process.env.JWT_SECRET || 'dev_secret_min_32_chars';
-const JWT_SECRET = new TextEncoder().encode(secret);
-
-const protectedRoutes = [
-  /^\/me(\/.*)?$/,
-  /^\/book(\/.*)?$/,
-  /^\/$/
-];
+import { COOKIE_NAME } from './lib/auth';
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isProtected = protectedRoutes.some((re) => re.test(pathname));
-  if (!isProtected) return NextResponse.next();
+
+  // Rutas que requieren sesión
+  const protectedRoutes = [
+    '/me',
+    '/book',
+    '/mi-perfil',
+    '/perfil',
+    '/dashboard',
+    '/api/reviews/private'
+  ];
+
+  const needsAuth = protectedRoutes.some((r) => pathname.startsWith(r));
+  if (!needsAuth) return NextResponse.next();
 
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) {
-    return NextResponse.redirect(new URL('/auth', req.url));
+    const url = req.nextUrl.clone();
+    url.pathname = '/auth';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
   }
+
   try {
-    await jwtVerify(token, JWT_SECRET);
+    await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET || 'dev_secret_min_32_chars'));
     return NextResponse.next();
   } catch {
-    return NextResponse.redirect(new URL('/auth', req.url));
+    const url = req.nextUrl.clone();
+    url.pathname = '/auth';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
   }
 }
 
 export const config = {
-  matcher: ['/me', '/book/:path*', '/'],
+  matcher: ['/me', '/book/:path*', '/mi-perfil', '/perfil/:path*', '/dashboard/:path*', '/api/reviews/private'],
 };

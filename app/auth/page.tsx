@@ -65,6 +65,8 @@ function readUser() {
 function logout() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(LS_USER_KEY);
+  // Llamar al backend para borrar la cookie
+  fetch("/api/auth/logout", { method: "POST" });
   window.dispatchEvent(new Event("auth-changed"));
 }
 
@@ -111,6 +113,12 @@ export default function AuthPage() {
   const [loading, setLoading] = React.useState(false);
   const [msg, setMsg] = React.useState<{ type: "success" | "error" | "", text: string }>({ type: "", text: "" });
   const [current, setCurrent] = React.useState<any>(null);
+  // Limpia el usuario al cerrar sesión
+  const handleLogout = () => {
+    logout();
+    setCurrent(null);
+    setMsg({ type: "success", text: "Sesión cerrada." });
+  };
 
   React.useEffect(() => {
     setCurrent(readUser());
@@ -136,7 +144,7 @@ export default function AuthPage() {
         )}
 
         {current ? (
-          <LoggedInView user={current} onLogout={() => { logout(); setMsg({ type: "success", text: "Sesión cerrada." }); }} />
+          <LoggedInView user={current} onLogout={handleLogout} />
         ) : tab === "login" ? (
           <LoginForm setLoading={setLoading} setMsg={setMsg} />
         ) : (

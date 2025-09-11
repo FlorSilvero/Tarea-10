@@ -14,6 +14,13 @@ export default function PerfilUsuario() {
       try {
         // Obtener datos de usuario y favoritos
         const resUser = await fetch('/api/me');
+        if (resUser.status === 401) {
+          localStorage.removeItem('auth:user');
+          window.dispatchEvent(new Event('auth-changed'));
+          setData(null);
+          window.location.href = '/auth';
+          return;
+        }
         const userJson = await resUser.json();
         if (!resUser.ok) throw new Error(userJson.error || 'Error al cargar usuario');
 
@@ -39,7 +46,7 @@ export default function PerfilUsuario() {
 
   if (loading) return <p>Cargando perfil...</p>;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
-  if (!data) return <p>No hay datos de usuario.</p>;
+  if (!data) return null;
 
   return (
     <div className="max-w-xl mx-auto p-6">

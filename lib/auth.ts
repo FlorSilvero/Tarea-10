@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const COOKIE_NAME = process.env.COOKIE_NAME || "session";
+export const COOKIE_NAME = process.env.NEXT_PUBLIC_COOKIE_NAME || process.env.COOKIE_NAME || "session";
 const secret = process.env.JWT_SECRET || "dev_secret_min_32_chars";
 const JWT_SECRET = new TextEncoder().encode(secret);
 const EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -36,7 +36,7 @@ export async function getSession(req: RequireUserRequest) {
   if (req && req.headers) {
     // Para tests con Express
     const cookieHeader = req.headers.get?.('cookie') || (typeof req.headers.cookie === 'string' ? req.headers.cookie : '');
-    token = cookieHeader?.match(/session=([^;]+)/)?.[1];
+  token = cookieHeader?.match(new RegExp(`${COOKIE_NAME}=([^;]+)`))?.[1];
   } else {
     // Next.js normal
     const jar = await cookies();

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { COOKIE_NAME } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { connectToDB } from "@/lib/db";
 import User from "@/models/User";
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
       ok: true,
       user: { id: user._id, email: user.email, name: user.name },
     }, { status: 200 });
-    res.cookies.set('session', token, {
+    res.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',

@@ -53,8 +53,9 @@ export default function HomePage() {
   }
   if (!user) return null;
 
-  function handleLogout() {
+  async function handleLogout() {
     localStorage.removeItem('auth:user');
+    await fetch('/api/auth/logout', { method: 'POST' });
     window.dispatchEvent(new Event('auth-changed'));
     window.location.href = '/auth';
   }
